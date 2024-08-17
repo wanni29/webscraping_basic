@@ -1,34 +1,3 @@
-'''
-import requests
-import time
-from bs4 import BeautifulSoup
-headers = {"User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"}
-url = "https://comic.naver.com/webtoon"
-res = requests.get(url, headers=headers)
-res.raise_for_status()
-
-time.sleep(5)  # 필요에 따라 대기 시간을 조절
-
-soup = BeautifulSoup(res.text, "lxml")
-
-print(res.text)
-
-# print(soup.title)
-# print(soup.title.get_text())
-# print(soup.a) # soup  객체에서 처음 발견되는 a의 값을 프린트함
-# print(soup.a.attrs) # a 태그 안에 있는 객체를 튜플형식으로 프린트함
-# print(soup.div["id"]) # div 태그 안의 `id` 값을 가져옴
-
-
-# print(soup.find(attrs={"class" : "Poster__image--d9XTI"}))
-# print(soup.find("li", attrs={"class" : "rank01"}))
-print(soup.find("div", attrs={"class" : "u_skip"}))
-''' 
-# -> 위의 코드로 진행하려고 했지만 requests 라이브러리는 html만 가져오기 때문에
-# -> selenium 과 chromedriver를 사용하여 html 과 javascript의 로직을 
-# -> 모두 함께 들고 오는 로직으로 기본적으로 갖추어야 할 코드를 수정해서 강의 진행
-
-# -- 여기서 부터 시작입니다 : ) --
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -46,49 +15,47 @@ url = "https://comic.naver.com/index"
 driver.get(url)
 
 # 페이지가 완전히 로드 될 때까지 잠시 대기
-time.sleep(0.01) # 필요에 따라 대기 시간을 조절 하기 
+time.sleep(0.01)
 
-# 페이지 소스 가져오기 
+# 페이지 소스 가져오기
 page_source = driver.page_source
 
 # BeautifulSoup을 사용하여 HTML 파싱
 soup = BeautifulSoup(page_source, "lxml")
 
-# 이 까지가 기본 구성이야
 
-# rank1 = soup.find("li", attrs={"class" : "AsideList__item--i30ly"})
-# rank1_text = rank1.find("span", class_="text").get_text()
-# rank2 = rank1.next_sibling.next_sibling
-# rank3 = rank2.next_sibling.next_sibling
-# print("rank1 => {} \n".format(rank1))
-# print("rank2 => {} \n".format(rank2))
-# print("rank3 => {} \n".format(rank3))
-# rank2 = rank3.previous_sibling.previous_sibling
-# print("rank2 => {} \n".format(rank2))
-
-# rank1_text = rank1.find("span", class_="text").get_text()
-
-# rank2 = rank1.find_next_sibling("li")
-# rank2_text = rank2.find("span", class_="text").get_text()
-
-# rank3 = rank2.find_next_sibling("li")
-# rank3_text  = rank3.find("span", class_="text").get_text()
-
-# print("rank1 : {}".format(rank1_text))
-# print("rank2 : {}".format(rank2_text))
-# print("rank3 : {}".format(rank3_text))
-
-# rank1을 기준으로 다음 형제들을 모두 가져오는것
+# 기본기 
 rank1 = soup.find("li", attrs={"class" : "AsideList__item--i30ly"})
-print("1위 : {}".format(rank1.find("span", class_="text").get_text()))
+rank1_text = rank1.find("span", class_="text").get_text()
+print(rank1_text)
 
-ranks_not_rank1 = rank1.find_next_siblings("li")
+# next_sibling / previous_sibling 사용해보기
+print("rank1.next_sibling : {}".format(rank1.next_sibling))
 
-rank_number  = 2
+print("rank1.previous_sibling : {}".format(rank1.previous_sibling))
 
-for rank in ranks_not_rank1:
-    print("{0}위 : {1}".format(rank_number, rank.find("span", class_="text").get_text()))
-    rank_number += 1
 
-webtoon = soup.find("a", string= "외모지상주의").get_text()
-print(webtoon)
+# 응용 - 클래스 이름은 같지만두번째 클래스부터 진행
+
+# 모든 해당요소 들고오기
+all_items = soup.find_all("ul", attrs={"class" : "AsideList__content_list--FXDvm"})
+
+# 두 번째 요소를 선택 
+second_item = all_items[1]
+
+# ul 아래에 있는 li의 값을 추출 
+target_rank1 = second_item.find("li", attrs={"class" : "AsideList__item--i30ly"})
+
+# 텍스트 값 도출
+
+# 랭킹 1위는 뽑아내고 이후는 포문 
+target_rank1_text = target_rank1.find("span", class_="text").get_text()
+print("랭킹 1위 : {0}".format(target_rank1_text))
+
+target_rank_all = target_rank1.find_next_siblings("li")
+
+rank_num = 2
+
+for rank in target_rank_all:
+    print("랭킹 {0}위 : {1}".format(rank_num, rank.find("span", class_="text").get_text()))
+    rank_num += 1
