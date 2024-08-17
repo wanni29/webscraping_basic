@@ -42,11 +42,11 @@ options.headless = True # 브라우저를 숨김 모드로 실행
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
 # 네이버 웹툰 페이지로 이동
-url = "https://comic.naver.com/webtoon"
+url = "https://comic.naver.com/index"
 driver.get(url)
 
 # 페이지가 완전히 로드 될 때까지 잠시 대기
-time.sleep(3) # 필요에 따라 대기 시간을 조절 하기 
+time.sleep(0.01) # 필요에 따라 대기 시간을 조절 하기 
 
 # 페이지 소스 가져오기 
 page_source = driver.page_source
@@ -54,4 +54,41 @@ page_source = driver.page_source
 # BeautifulSoup을 사용하여 HTML 파싱
 soup = BeautifulSoup(page_source, "lxml")
 
-# ============ 이 까지를 기본 소스코드로 가져가자 ! : ) ========
+# 이 까지가 기본 구성이야
+
+# rank1 = soup.find("li", attrs={"class" : "AsideList__item--i30ly"})
+# rank1_text = rank1.find("span", class_="text").get_text()
+# rank2 = rank1.next_sibling.next_sibling
+# rank3 = rank2.next_sibling.next_sibling
+# print("rank1 => {} \n".format(rank1))
+# print("rank2 => {} \n".format(rank2))
+# print("rank3 => {} \n".format(rank3))
+# rank2 = rank3.previous_sibling.previous_sibling
+# print("rank2 => {} \n".format(rank2))
+
+# rank1_text = rank1.find("span", class_="text").get_text()
+
+# rank2 = rank1.find_next_sibling("li")
+# rank2_text = rank2.find("span", class_="text").get_text()
+
+# rank3 = rank2.find_next_sibling("li")
+# rank3_text  = rank3.find("span", class_="text").get_text()
+
+# print("rank1 : {}".format(rank1_text))
+# print("rank2 : {}".format(rank2_text))
+# print("rank3 : {}".format(rank3_text))
+
+# rank1을 기준으로 다음 형제들을 모두 가져오는것
+rank1 = soup.find("li", attrs={"class" : "AsideList__item--i30ly"})
+print("1위 : {}".format(rank1.find("span", class_="text").get_text()))
+
+ranks_not_rank1 = rank1.find_next_siblings("li")
+
+rank_number  = 2
+
+for rank in ranks_not_rank1:
+    print("{0}위 : {1}".format(rank_number, rank.find("span", class_="text").get_text()))
+    rank_number += 1
+
+webtoon = soup.find("a", string= "외모지상주의").get_text()
+print(webtoon)
