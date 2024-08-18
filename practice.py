@@ -5,18 +5,17 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 from bs4 import BeautifulSoup
 
-# 웹 드라이버 설정 
+# 웹 드라이버 설정
 options = webdriver.ChromeOptions()
-options.headless = True # 브라우저를 숨김 모드로 진행
+options.headless = True
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-
 # 네이버 웹툰 페이지로 이동
-url = "https://comic.naver.com/index"
+url = "https://comic.naver.com/webtoon/list?titleId=777767"
 driver.get(url)
 
-# 페이지가 완전히 로드 될 때까지 잠시 대기
-time.sleep(2)
+# 페이지가 완전히 로드 될 때까지 잠시 대기 
+time.sleep(3)
 
 # 페이지 소스 가져오기
 page_source = driver.page_source
@@ -24,33 +23,12 @@ page_source = driver.page_source
 # BeautifulSoup을 사용하여 HTML 파싱
 soup = BeautifulSoup(page_source, "lxml")
 
-# 기본기 
-rank1 = soup.find("li", class_="AsideList__item--i30ly")
-rank1_text = rank1.find("span", attrs={"class" : "text"}).get_text()
-print(rank1_text)
+# 모든 a태그를 가져오기(링크와 타이틀을 함께 포함)
+cartoons = soup.find_all("a", class_="EpisodeListList__link--DdClU")
 
-print("rank1.next_sibling : {}".format(rank1.next_sibling))
-print("rank1.previous_sibling : {}".format(rank1.previous_sibling))
-
-# 모든 해당요소 들고오기
-all_items = soup.find_all("ul", class_="AsideList__content_list--FXDvm")
-
-# 두번째 요소를 선택
-second_item = all_items[1]
-
-# ul 아래에 있는 li값 추출
-target_rank1 = second_item.find("li", class_="AsideList__item--i30ly")
-
-# 텍스트 값 도출 
-
-# 랭킹 1위는 뽑아내고 이후는 포문
-target_rank1_text = target_rank1.find("span", class_="text").get_text()
-print("랭킹 1위 : {}".format(target_rank1_text))
-
-target_rank_all = target_rank1.find_next_siblings("li")
-
-rank_num = 2
-
-for rank in target_rank_all:
-    print("랭킹 {0}위 : {1}".format(rank_num, rank.find("span", class_="text").get_text()))
-    rank_num += 1
+# 각 a태그에서 제목과 링크를 추출
+# strip() : 문자열 접두 / 접미 쪽 공백을 제거
+for cartoon in cartoons:
+    title = cartoon.find("span", class_="EpisodeListList__title--lfIzU").get_text()
+    link = "https://comic.naver.com" + cartoon["href"]
+    print("내가 제일 좋아하는 웹툰 : {0}, 보러가기(클릭): {1}".format(title, link))
