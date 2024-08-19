@@ -28,10 +28,25 @@ episode_links = soup.find_all("a", class_="EpisodeListList__link--DdClU")
 
 # 각 a태그 에서 제목과 링크를 추출
 # strip() : 문자열 접두 / 접미 쪽 공백 제거 
-for episode in episode_links:
-    title = episode.find("span", attrs={"class" : "EpisodeListList__title--lfIzU"}).get_text()
-    link = "https://comic.naver.com" +  episode["href"]
-    print("제목 : {0}, 링크 {1}".format(title, link))
+
+# 만화 제목 + 링크 가져오기
+# for episode in episode_links:
+#     title = episode.find("span", attrs={"class" : "EpisodeListList__title--lfIzU"}).get_text()
+#     link = "https://comic.naver.com" +  episode["href"]
+#     print("제목 : {0}, 링크 {1}".format(title, link))
+
+# 평점 정보
+total_rates = 0
+
+cartoons = soup.find_all("div", class_="EpisodeListList__meta_info--Cgquz")
+for cartoon in cartoons:
+    rate = cartoon.find("span", class_="text").get_text()
+    print(rate)
+    total_rates += float(rate)
+print("전체 점수 : ", total_rates)
+print("평균 점수 : ", total_rates / len(cartoons))    
 
 # 브라우저 닫기
 driver.quit()
+
+# 뷰티풀 수프 한글 문서 제공함 꼭  읽어보고 공부해보기
