@@ -43,7 +43,7 @@ for i in range(1, 6):
             # print(" <삼성 상품 제외합니다>")
             continue
 
-        price = item. find("em", class_="sale").get_text() # 가격 
+        price = item.find("em", class_="sale").get_text() # 가격 
 
         # 리뷰 100개 이상, 평점 4.5 이상 되는 것만 조회
         rate = item.find("em", class_="rating") #  평점 

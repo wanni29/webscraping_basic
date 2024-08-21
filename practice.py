@@ -2,33 +2,73 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-import time
+import time 
 from bs4 import BeautifulSoup
+import re
 
 # 웹 드라이버 설정
 options = webdriver.ChromeOptions()
+# 사이트에서 웹 스크랩핑을 진행하는지 인지하지 못하도록 만드는 코드
+options.add_argument('--disable-blink-features=AutomationControlled')
 options.headless = True
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()), options=options)
 
-# 네이버 웹툰 페이지로 이동
-url = "https://comic.naver.com/webtoon/list?titleId=777767"
-driver.get(url)
+for i in range(1,6):
+    print(f"페이지 정보 : {i}페이지")
+    url = "https://www.coupang.com/np/search?q=%EB%85%B8%ED%8A%B8%EB%B6%81&channel=user&component=&eventCategory=SRP&trcid=&traid=&sorter=scoreDesc&minPrice=&maxPrice=&priceRange=&filterType=&listSize=36&filter=&isPriceRange=false&brand=&offerCondition=&rating=0&page={0}&rocketAll=false&searchIndexingToken=1=9&backgroundColor=".format(i)
+    driver.get(url)
 
-# 페이지가 완전히 로드 될 때까지 잠시 대기 
-time.sleep(3)
+    # 페이지가 완전히 로드 될 때까지 잠시 대기
+    time.sleep(2)
 
-# 페이지 소스 가져오기
-page_source = driver.page_source
+    # 페이지 소스 가져오기
+    page_source = driver.page_source
+    
+    #BeautifulSoup을 사용해서 HTML파싱
+    soup = BeautifulSoup(page_source, "lxml")
 
-# BeautifulSoup을 사용하여 HTML 파싱
-soup = BeautifulSoup(page_source, "lxml")
+    items = soup.find_all("li", class_=re.compile("^search-product"))
 
-# 모든 a태그를 가져오기(링크와 타이틀을 함께 포함)
-cartoons = soup.find_all("a", class_="EpisodeListList__link--DdClU")
+    for item in items:
 
-# 각 a태그에서 제목과 링크를 추출
-# strip() : 문자열 접두 / 접미 쪽 공백을 제거
-for cartoon in cartoons:
-    title = cartoon.find("span", class_="EpisodeListList__title--lfIzU").get_text()
-    link = "https://comic.naver.com" + cartoon["href"]
-    print("내가 제일 좋아하는 웹툰 : {0}, 보러가기(클릭): {1}".format(title, link))
+        # 광고 제품은 제외
+        ad_badge = item.find("span", class_="ad-badge-text")
+        if ad_badge:
+            continue
+        
+        # 상품명
+        name = item.find("div", class_="name").get_text()
+        # 삼성 제품 제외
+        if "삼성" in name:
+            continue
+
+        # 가격
+        price = item.find("em", class_="sale").get_text()
+
+        # 평점 
+        rate = item.find("em", class_="rating")
+        if rate:
+            rate = rate.get_text()
+        else:
+            continue
+
+        # 리뷰
+        rate_count = item.find("span",class_="rating-total-count")
+        if rate_count:
+            rate_count = rate_count.get_text()[1:-1]
+        else:
+            continue
+
+        # 바로 구매하도록 링크 같이 걸기
+        link = item.find("a", class_="search-product-link")["href"]
+
+        # 리뷰 100개 이상, 평점 4.5 이상 되는 것만 조회
+        if float(rate) >= 4.5 and int(rate_count) > 100:
+            print("제품명 : {}".format(name))
+            print("가격 : {}".format(price))
+            print("평점 : {}점 ({}개)".format(rate, rate_count))
+            print("바로가기 : {}".format("https://www.coupang.com" + link))
+            print("-" * 100)
+
+
+
