@@ -1,74 +1,41 @@
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-import time 
-from bs4 import BeautifulSoup
-import re
+import time
 
-# 웹 드라이버 설정
+# Setup Chrome options
 options = webdriver.ChromeOptions()
-# 사이트에서 웹 스크랩핑을 진행하는지 인지하지 못하도록 만드는 코드
-options.add_argument('--disable-blink-features=AutomationControlled')
-options.headless = True
-driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()), options=options)
 
-for i in range(1,6):
-    print(f"페이지 정보 : {i}페이지")
-    url = "https://www.coupang.com/np/search?q=%EB%85%B8%ED%8A%B8%EB%B6%81&channel=user&component=&eventCategory=SRP&trcid=&traid=&sorter=scoreDesc&minPrice=&maxPrice=&priceRange=&filterType=&listSize=36&filter=&isPriceRange=false&brand=&offerCondition=&rating=0&page={0}&rocketAll=false&searchIndexingToken=1=9&backgroundColor=".format(i)
-    driver.get(url)
+# 옵션 추가 - 창이 닫히지 않도록
+options.add_experimental_option("detach", True)
 
-    # 페이지가 완전히 로드 될 때까지 잠시 대기
-    time.sleep(2)
+# initialize the browser
+browser = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-    # 페이지 소스 가져오기
-    page_source = driver.page_source
-    
-    #BeautifulSoup을 사용해서 HTML파싱
-    soup = BeautifulSoup(page_source, "lxml")
+# 창 최대화
+browser.maximize_window()
 
-    items = soup.find_all("li", class_=re.compile("^search-product"))
+# 네이버 항공권 이동
+browser.get("https://flight.naver.com/")
 
-    for item in items:
+# 가는 날 선택 클릭
+browser.find_element(By.XPATH, "//button[contains(@class, 'tabContent_option___mYJO') and contains(@class, 'select_Date__Potbp')]").click()
 
-        # 광고 제품은 제외
-        ad_badge = item.find("span", class_="ad-badge-text")
-        if ad_badge:
-            continue
-        
-        # 상품명
-        name = item.find("div", class_="name").get_text()
-        # 삼성 제품 제외
-        if "삼성" in name:
-            continue
+# 이번달 27일, 다음달 28일 선택
+browser.find_element(By.CLASS_NAME, "end").click()
+time.sleep(1.5)
 
-        # 가격
-        price = item.find("em", class_="sale").get_text()
+browser.find_element(By.XPATH, "//button[text()='국내']").click()
+time.sleep(1.5)
 
-        # 평점 
-        rate = item.find("em", class_="rating")
-        if rate:
-            rate = rate.get_text()
-        else:
-            continue
+browser.find_element(By.XPATH, "//i[text()='제주']").click()
 
-        # 리뷰
-        rate_count = item.find("span",class_="rating-total-count")
-        if rate_count:
-            rate_count = rate_count.get_text()[1:-1]
-        else:
-            continue
-
-        # 바로 구매하도록 링크 같이 걸기
-        link = item.find("a", class_="search-product-link")["href"]
-
-        # 리뷰 100개 이상, 평점 4.5 이상 되는 것만 조회
-        if float(rate) >= 4.5 and int(rate_count) > 100:
-            print("제품명 : {}".format(name))
-            print("가격 : {}".format(price))
-            print("평점 : {}점 ({}개)".format(rate, rate_count))
-            print("바로가기 : {}".format("https://www.coupang.com" + link))
-            print("-" * 100)
-
-
-
+#  어떠한 엘리먼트가 나올때까지 기달려줘 라는 의미( 최대 10초까지 기달림 )
+try:
+    elem = WebDriverWait(browser, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//*[@id='__next']/div/main/div[4]/div/div[2]/div[2]")))
+    print(elem.text)
+finally:
+    browser.quit()
