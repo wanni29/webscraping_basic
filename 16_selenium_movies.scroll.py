@@ -59,4 +59,52 @@ while True:
     
     prev_height = curr_height
 
-print("스크롤 완료")
+print("스크롤 완료") 
+
+import requests
+from bs4 import BeautifulSoup
+
+soup = BeautifulSoup(browser.page_source, "lxml")
+
+movies = soup.find_all("ytd-grid-movie-renderer", class_="style-scope ytd-grid-renderer")
+
+print(f"total_movie_count : {len(movies)}")
+
+for movie in movies:
+    # 영화 제목
+    title = movie.find("span", class_="style-scope ytd-grid-movie-renderer")
+    if title:
+        title = title.get_text().strip()
+    else:
+        continue
+
+    # 징르
+    category = movie.find("span", class_="grid-movie-renderer-metadata style-scope ytd-grid-movie-renderer")
+    if category:
+        category = category.get_text().split(" • ")[0].strip()
+    else:
+        continue
+
+    # 저장 방식
+    buy_or_rental = movie.find("p", class_="style-scope ytd-badge-supported-renderer")
+    if buy_or_rental:
+        buy_or_rental = buy_or_rental.get_text().strip()
+    else:
+        continue
+
+    # 링크 정보
+    link = movie.find("a", class_="yt-simple-endpoint inline-block style-scope ytd-thumbnail")["href"]
+    if link:
+        link = "https://www.youtube.com" + link 
+    else:
+        continue
+    
+    print("-" * 100)
+    print(f"영화 제목 : {title}")
+    print(f"저장 방식 : {buy_or_rental}")
+    print(f"장르 :  {category}")
+    print(f"링크 : {link}")
+    print("-" * 100)
+
+browser.quit()
+
