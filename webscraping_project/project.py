@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 
 # create_soup 
@@ -7,6 +8,11 @@ def create_soup(url):
     res.raise_for_status()
     soup = BeautifulSoup(res.text, "lxml")
     return soup
+
+# print_news
+def print_news(index, title, link):
+    print(f"{index+1}. {title}")
+    print(f"(링크 : {link})")
 
 # scrape_weather
 def scrape_weather():
@@ -64,11 +70,50 @@ def scrape_headline_news():
             continue
 
         # 출력
-        print(f"{index+1}. {title}")
-        print(f"(링크 : {link})")
-        print()
+        print_news(index, title, link)
+    print()
+
+# scrape_it_news
+def scrape_it_news():
+    print("[IT뉴스]")
+    url = "https://news.naver.com/breakingnews/section/105/230"
+    soup = create_soup(url)
+    news_list = soup.find_all("li", class_="sa_item _LAZY_LOADING_WRAP", limit=3)
+    for index, news in enumerate(news_list):
+        title = news.find("strong", class_="sa_text_strong")
+        if title:
+            title = title.get_text().strip()
+        else: 
+            continue
+
+        link = news.find("a", class_="sa_text_title _NLOG_IMPRESSION")["href"]
+
+        # 출력
+        print_news(index, title, link)
+    print()
+
+# scrape_english
+def scrape_english():
+    print("[오늘의 영어회화]")
+    
+    url = "https://www.hackers.co.kr/?c=s_eng/eng_contents/I_others_english&keywd=haceng_submain_lnb_eng_I_others_english&logger_kw=haceng_submain_lnb_eng_I_others_english"
+    soup = create_soup(url)
+
+    sentences = soup.find_all("div", attrs={"id" : re.compile("^conv_kor_t")})
+    print(" (영어 지문) ")
+    for sentence in sentences[len(sentences)//2:]: 
+        print(sentence.get_text().strip())
+
+    print()
+    print(" (한글 지문) ")
+    for sentence in sentences[:len(sentences)//2]:
+        print(sentence.get_text().strip())
+    print()
+
 
 # Setup Logic
 if __name__ == "__main__":
-    # scrape_weather() # 오늘의 날씨 정보 가져오기
-    scrape_headline_news()
+    scrape_weather() # 오늘의 날씨 정보 가져오기
+    scrape_headline_news() # 헤드라인 뉴스 가져오기
+    scrape_it_news() # IT 뉴스 정보 가져오기
+    scrape_english() # 오늘의 영어 회화 가져오기
