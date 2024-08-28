@@ -1,22 +1,18 @@
 import requests
 from bs4 import BeautifulSoup
 
-'''
-[오늘의 날씨]
-흐림, 어제보다 00도 높아요
-현재 00도 (최저 00도 / 최고 00도)
-오전 강수확률 00% / 오후 강수확률 00%
-
-미세먼지 좋음
-초미세먼지 좋음
-'''
-
-def scrape_weather():
-    print("[오늘의 날씨]")
-    url = "https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=%EB%82%A0%EC%94%A8"
+# create_soup 
+def create_soup(url):
     res = requests.get(url)
     res.raise_for_status()
     soup = BeautifulSoup(res.text, "lxml")
+    return soup
+
+# scrape_weather
+def scrape_weather():
+    print("[오늘의 날씨]")
+    url = "https://search.naver.com/search.naver?where=nexearch&sm=top_hty&fbm=0&ie=utf8&query=%EB%82%A0%EC%94%A8"
+    soup = create_soup(url)
 
     cast = soup.find("p", class_="summary").get_text()
 
@@ -46,5 +42,33 @@ def scrape_weather():
     print(f"{pm25.strip()}")
     print()
 
+# scrape_headline_news
+def scrape_headline_news():
+    print("[헤드라인 뉴스]")
+    url = "https://news.naver.com"
+    soup = create_soup(url)
+    news_list = soup.find_all("div", class_="cjs_journal_wrap _item_contents", limit=3)
+    for index, news in enumerate(news_list):
+        # title
+        title = news.find("div", class_="cjs_t")
+        if title:
+            title = title.get_text().strip()
+        else:
+            continue
+
+        # link
+        link = news.find("a", class_="cjs_news_a _cds_link _editn_link")["href"]
+        if link:
+            link = link
+        else:
+            continue
+
+        # 출력
+        print(f"{index+1}. {title}")
+        print(f"(링크 : {link})")
+        print()
+
+# Setup Logic
 if __name__ == "__main__":
-    scrape_weather() # 오늘의 날씨 정보 가져오기
+    # scrape_weather() # 오늘의 날씨 정보 가져오기
+    scrape_headline_news()
